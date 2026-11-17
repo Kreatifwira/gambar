@@ -225,10 +225,10 @@ Deno.serve(async (req: Request) => {
         const style = String(prompt.visual_style || "cinematic").slice(0, 100);
         const prefix = "Cinematic music-video frame. Style: " + style + ". Scene: ";
         const suffix = ". No text, subtitles, logos, or watermark.";
-        const scene = String(prompt.prompt_text || "").trim().replace(/\\s+/g, " ");
+        const scene = String(prompt.prompt_text || "").trim().replaceAll("\n", " ").replaceAll("\r", " ").replaceAll("\t", " ");
         const sceneBudget = Math.max(100, 780 - prefix.length - suffix.length);
         const sceneText = scene.length > sceneBudget
-          ? scene.slice(0, sceneBudget).replace(/\\s+\\S*$/, "")
+          ? scene.slice(0, sceneBudget)
           : scene;
         const promptText = prefix + sceneText + suffix;
 
