@@ -7,7 +7,7 @@ const styles = ['Cinematic','Anime','Realistic','Fantasy','Watercolor','3D Anima
 const cx = (...v) => v.filter(Boolean).join(' ');
 
 
-function splitLyricsIntoChunks(text, maxLines = 40) {
+function splitLyricsIntoChunks(text, maxLines = 8) {
   const chunks = [];
   let current = [];
   let count = 0;
@@ -141,7 +141,7 @@ function App() {
       const {data:saved,error:saveError} = await supabase.from('projects').update({lyrics,updated_at:new Date().toISOString()}).eq('id',selected.id).select().single();
       if (saveError) throw saveError;
       setSelected(saved); setProjects(p=>p.map(x=>x.id===saved.id?saved:x));
-      const lyricChunks = splitLyricsIntoChunks(lyrics, 40);
+      const lyricChunks = splitLyricsIntoChunks(lyrics, 8);
       if (!lyricChunks.length) throw new Error('Tidak ditemukan baris lirik.');
       let allPrompts = [];
       let lineOffset = 0;
