@@ -219,13 +219,18 @@ Deno.serve(async (req: Request) => {
       await supabase.from("projects").update({ status: "processing", updated_at: new Date().toISOString() }).eq("id", prompt.project_id).eq("user_id", userId);
 
       try {
-        const promptText = [
-          "Create one polished cinematic music-video storyboard image.",
-          "Visual style: " + (prompt.visual_style || "cinematic") + ".",
-          "Scene: " + prompt.prompt_text + ".",
-          "Avoid: " + (prompt.negative_prompt || "text, captions, watermark, logo, blurry image") + ".",
-          "Do not add text, subtitles, logos, or watermarks."
-        ].join(" ");
+        // Z-Image Turbo has an 800-character prompt limit. Keep a safety margin
+        // and preserve the scene description instead of sending the full DeepSeek
+        // prompt plus long repeated instructions.
+        const style = String(prompt.visual_style || "cinematic").slice(0, 100);
+        const prefix = "Cinematic music-video frame. Style: " + style + ". Scene: ";
+        const suffix = ". No text, subtitles, logos, or watermark.";
+        const scene = String(prompt.prompt_text || "").trim().replace(/\\s+/g, " ");
+        const sceneBudget = Math.max(100, 780 - prefix.length - suffix.length);
+        const sceneText = scene.length > sceneBudget
+          ? scene.slice(0, sceneBudget).replace(/\\s+\\S*$/, "")
+          : scene;
+        const promptText = prefix + sceneText + suffix;
 
         const controller = new AbortController();
         const generationTimeout = setTimeout(() => controller.abort(), 70000);
