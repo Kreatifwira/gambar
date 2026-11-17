@@ -168,13 +168,13 @@ function App() {
     const text = ordered.map(item => {
       const line = item.lyric_line?.line_number || '—';
       const lyric = item.lyric_line?.lyric_text || '';
-      return 'BARIS '+line+': '+lyric+'\\nPROMPT: '+item.prompt_text+(item.negative_prompt?'\\nNEGATIVE PROMPT: '+item.negative_prompt:'');
-    }).join('\\n\\n---\\n\\n');
+      return 'BARIS '+line+': '+lyric+'\nPROMPT: '+item.prompt_text+(item.negative_prompt?'\nNEGATIVE PROMPT: '+item.negative_prompt:'');
+    }).join('\n\n---\n\n');
     try { await navigator.clipboard.writeText(text); setNotice(ordered.length+' prompt berhasil disalin. Tempel satu per satu di Gemini.'); }
     catch { setNotice('Clipboard tidak dapat diakses. Gunakan tombol Salin Prompt pada setiap baris.'); }
   }
   async function copyOnePrompt(item) {
-    const text = item.prompt_text + (item.negative_prompt ? '\\nNegative prompt: '+item.negative_prompt : '');
+    const text = item.prompt_text + (item.negative_prompt ? '\nNegative prompt: '+item.negative_prompt : '');
     try { await navigator.clipboard.writeText(text); setNotice('Prompt baris '+(item.lyric_line?.line_number||'')+' berhasil disalin.'); }
     catch { setNotice('Tidak dapat menyalin prompt dari browser ini.'); }
   }
