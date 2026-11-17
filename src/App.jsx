@@ -12,23 +12,23 @@ function splitLyricsIntoChunks(text, maxLines = 40) {
   let current = [];
   let count = 0;
   let section = '';
-  for (const raw of String(text || '').split(/\\r?\\n/)) {
+  for (const raw of String(text || '').split(/\r?\n/)) {
     const line = raw.trim();
     if (!line) continue;
-    if (/^\\[.*\\]$/.test(line)) {
+    if (/^\[.*\]$/.test(line)) {
       section = line;
       current.push(line);
       continue;
     }
     if (count >= maxLines) {
-      chunks.push(current.join('\\n'));
+      chunks.push(current.join('\n'));
       current = section ? [section] : [];
       count = 0;
     }
     current.push(line);
     count++;
   }
-  if (current.some(line => line.trim() && !/^\\[.*\\]$/.test(line.trim()))) chunks.push(current.join('\\n'));
+  if (current.some(line => line.trim() && !/^\[.*\]$/.test(line.trim()))) chunks.push(current.join('\n'));
   return chunks;
 }
 \nfunction App() {
@@ -153,7 +153,7 @@ function splitLyricsIntoChunks(text, maxLines = 40) {
           replace_existing:i === 0
         });
         allPrompts = allPrompts.concat(part.prompts || []);
-        lineOffset += lyricChunks[i].split(/\\r?\\n/).filter(line => line.trim() && !/^\\[.*\\]$/.test(line.trim())).length;
+        lineOffset += lyricChunks[i].split(/\r?\n/).filter(line => line.trim() && !/^\[.*\]$/.test(line.trim())).length;
       }
       await loadAssets(selected.id);
       let done = 0, failed = 0;
