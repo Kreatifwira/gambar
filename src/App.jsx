@@ -82,7 +82,17 @@ function App() {
   }
   async function runStudio(action,payload) {
     const {data,error} = await supabase.functions.invoke('studio-ai',{body:{action,...payload}});
-    if (error) throw new Error(error.message || 'Tidak dapat menghubungi backend AI.');
+    if (error) {
+      let detail = error.message || 'Tidak dapat menghubungi backend AI.';
+      try {
+        const response = error.context;
+        if (response && typeof response.json === 'function') {
+          const body = await response.json();
+          if (body?.error) detail = body.error;
+        }
+      } catch {}
+      throw new Error(detail);
+    }
     if (data?.error) throw new Error(data.error);
     return data;
   }
