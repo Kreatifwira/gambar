@@ -6,7 +6,32 @@ const initialStyle = 'Cinematic';
 const styles = ['Cinematic','Anime','Realistic','Fantasy','Watercolor','3D Animation','Noir','Custom'];
 const cx = (...v) => v.filter(Boolean).join(' ');
 
-function App() {
+
+function splitLyricsIntoChunks(text, maxLines = 40) {
+  const chunks = [];
+  let current = [];
+  let count = 0;
+  let section = '';
+  for (const raw of String(text || '').split(/\\r?\\n/)) {
+    const line = raw.trim();
+    if (!line) continue;
+    if (/^\\[.*\\]$/.test(line)) {
+      section = line;
+      current.push(line);
+      continue;
+    }
+    if (count >= maxLines) {
+      chunks.push(current.join('\\n'));
+      current = section ? [section] : [];
+      count = 0;
+    }
+    current.push(line);
+    count++;
+  }
+  if (current.some(line => line.trim() && !/^\\[.*\\]$/.test(line.trim()))) chunks.push(current.join('\\n'));
+  return chunks;
+}
+\nfunction App() {
   const [session,setSession] = useState(null);
   const [projects,setProjects] = useState([]);
   const [active,setActive] = useState('Dashboard');
@@ -115,11 +140,25 @@ function App() {
       const {data:saved,error:saveError} = await supabase.from('projects').update({lyrics,updated_at:new Date().toISOString()}).eq('id',selected.id).select().single();
       if (saveError) throw saveError;
       setSelected(saved); setProjects(p=>p.map(x=>x.id===saved.id?saved:x));
-      const result = await runStudio('create_prompts',{project_id:selected.id});
+      const lyricChunks = splitLyricsIntoChunks(lyrics, 40);
+      if (!lyricChunks.length) throw new Error('Tidak ditemukan baris lirik.');
+      let allPrompts = [];
+      let lineOffset = 0;
+      for (let i = 0; i < lyricChunks.length; i++) {
+        setPipelineMessage('Membuat prompt visual bagian ' + (i + 1) + ' dari ' + lyricChunks.length + '…');
+        const part = await runStudio('create_prompts',{
+          project_id:selected.id,
+          lyrics_chunk:lyricChunks[i],
+          line_offset:lineOffset,
+          replace_existing:i === 0
+        });
+        allPrompts = allPrompts.concat(part.prompts || []);
+        lineOffset += lyricChunks[i].split(/\\r?\\n/).filter(line => line.trim() && !/^\\[.*\\]$/.test(line.trim())).length;
+      }
       await loadAssets(selected.id);
       let done = 0, failed = 0;
-      for (const prompt of result.prompts) {
-        setPipelineMessage('Membuat gambar '+(done+failed+1)+' dari '+result.total+'…');
+      for (const prompt of allPrompts) {
+        setPipelineMessage('Membuat gambar '+(done+failed+1)+' dari '+allPrompts.length+'…');
         try { await runStudio('generate_image',{prompt_id:prompt.id}); done++; }
         catch(e) { failed++; setNotice('Gambar ke-'+(done+failed)+' gagal dibuat: '+e.message); }
         await loadAssets(selected.id);
