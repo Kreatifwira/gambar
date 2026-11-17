@@ -31,7 +31,8 @@ function splitLyricsIntoChunks(text, maxLines = 40) {
   if (current.some(line => line.trim() && !/^\[.*\]$/.test(line.trim()))) chunks.push(current.join('\n'));
   return chunks;
 }
-\nfunction App() {
+
+function App() {
   const [session,setSession] = useState(null);
   const [projects,setProjects] = useState([]);
   const [active,setActive] = useState('Dashboard');
